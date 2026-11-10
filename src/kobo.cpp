@@ -2,7 +2,7 @@
 ------------------------------------------------------------
    Kobo Deluxe - An enhanced SDL port of XKobo
 ------------------------------------------------------------
- * Copyright (C) §95, 1996 Akira Higuchi
+ * Copyright (C) 1995, 1996 Akira Higuchi
  * Copyright (C) 2001-2003, 2005-2007, 2020 David Olofson
  * Copyright (C) 2005 Erik Auerswald
  * 
@@ -130,14 +130,40 @@ static void main_cleanup()
 	Various functions
 ----------------------------------------------------------*/
 
+#if defined(KOBO_USERDIR) && !defined(WIN32)
+/*
+ * Create the per-user directory (default ~/.kobodeluxe) on first run, so
+ * that player profiles, scores and the config file can be saved.
+ */
+static void create_userdir(void)
+{
+	const char *prefix = "HOME>>";
+	const char *home = getenv("HOME");
+	const char *dir = KOBO_USERDIR;
+	char buf[1024];
+	if(!home || strncmp(dir, prefix, strlen(prefix)) != 0)
+		return;
+	dir += strlen(prefix);
+	snprintf(buf, sizeof(buf), "%s/%s", home, dir);
+	if((::mkdir(buf, 0755) == 0))
+		log_printf(ULOG, "Created user directory \"%s\".\n", buf);
+}
+#endif
+
+
 static void setup_dirs(char *xpath)
 {
 	fmap->exepath(xpath);
+#if defined(KOBO_USERDIR) && !defined(WIN32)
+	create_userdir();
+#endif
 
 #ifdef KOBO_DATADIR
 	fmap->addpath("DATA", KOBO_DATADIR);
 #endif
 	fmap->addpath("DATA", "EXE>>");		// Next to the executable
+	// Uninstalled build tree: <source>/build/src/kobodl -> <source>/data
+	fmap->addpath("DATA", "EXE>>../../data");
 
 	/*
 	 * Graphics data

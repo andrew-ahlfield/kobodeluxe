@@ -221,8 +221,8 @@ inline void _enemy::shot_template(const enemy_kind * ekp,
 	int vy = -diffy;
 	if(rnd)
 	{
-		vx += gamerand.get() & (rnd - 1) - (rnd >> 1);
-		vy += gamerand.get() & (rnd - 1) - (rnd >> 1);
+		vx += gamerand.get() & ((rnd - 1) - (rnd >> 1));
+		vy += gamerand.get() & ((rnd - 1) - (rnd >> 1));
 	}
 	vx = PIXEL2CS(vx) / (1<<shift);
 	vy = PIXEL2CS(vy) / (1<<shift);
@@ -427,7 +427,7 @@ void _enemy::move_bomb1()
 {
 	int h1 = ABS(diffx);
 	int v1 = ABS(diffy);
-	if(((h1 < 100) && (v1 < 30)) || (h1 < 30) && (v1 < 100))
+	if(((h1 < 100) && (v1 < 30)) || ((h1 < 30) && (v1 < 100)))
 	{
 		int vx1 = PIXEL2CS(-diffx) / (3*8);
 		int vy1 = PIXEL2CS(-diffy) / (3*8);
@@ -472,7 +472,7 @@ void _enemy::move_bomb2()
 {
 	int h1 = ABS(diffx);
 	int v1 = ABS(diffy);
-	if(((h1 < 100) && (v1 < 20)) || (h1 < 20) && (v1 < 100))
+	if(((h1 < 100) && (v1 < 20)) || ((h1 < 20) && (v1 < 100)))
 	{
 		int vx1 = PIXEL2CS(-diffx) / (3*8);
 		int vy1 = PIXEL2CS(-diffy) / (3*8);

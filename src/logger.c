@@ -99,6 +99,7 @@ static inline int log_write_raw(int target, const char *text)
 	{
 		/* We should never get here. */
 		assert(0);
+		return -1;
 	}
 }
 

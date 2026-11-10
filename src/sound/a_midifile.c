@@ -154,7 +154,7 @@ static inline void set_tempo(midi_player_t *mp, unsigned ppqn, unsigned usqtr)
 	mp->c.usqtr = usqtr;
 	mp->c.spulse = (float)usqtr / (float)ppqn / 1000000.0;
 	midiprintf(D2LOG, "ppqn = %u  ", ppqn);
-	midiprintf(D2LOG, "µsqtr = %u  ", usqtr);
+	midiprintf(D2LOG, "usqtr = %u  ", usqtr);
 	midiprintf(D2LOG, "spulse = %f  ", mp->c.spulse);
 }
 
@@ -593,7 +593,7 @@ int mp_update(midi_player_t *mp)
 					  case 0x51:	/* Set Tempo */
 						x = getnext(mp, l);
 						set_tempo(mp, mp->c.ppqn, x);
-						midiprintf(D2LOG, "(µsqtr:%u ==> BPM:%f)",
+						midiprintf(D2LOG, "(usqtr:%u ==> BPM:%f)",
 								mp->c.usqtr,
 								60.0*1000000.0 /
 								(float)mp->c.usqtr);

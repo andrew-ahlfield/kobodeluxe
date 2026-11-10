@@ -619,6 +619,29 @@ int s_table_cmp(const void *_a, const void *_b)
 }
 
 
+/*
+ * Player profiles are named "<name>.<uid>" (or just "<uid>" for old XKobo
+ * score files). Anything else in the score directory, such as the config
+ * file, which shares ~/.kobodeluxe with the profiles, is not a profile.
+ */
+static bool is_profile_file(const char *path)
+{
+	const char *base = strrchr(path, '/');
+	base = base ? base + 1 : path;
+	const char *digits = strrchr(base, '.');
+	digits = digits ? digits + 1 : base;
+	if(!*digits)
+		return false;
+	for(const char *c = digits; *c; ++c)
+		if((*c < '0') || (*c > '9'))
+			return false;
+	struct stat st_buffer;
+	if(stat(path, &st_buffer) || !S_ISREG(st_buffer.st_mode))
+		return false;
+	return true;
+}
+
+
 void score_manager_t::gather_high_scores(int placeholders)
 {
 	const int sc[] = {
@@ -654,6 +677,9 @@ void score_manager_t::gather_high_scores(int placeholders)
 		const char *path = fmap->get_next();
 		if(!path)
 			break;
+
+		if(!is_profile_file(path))
+			continue;
 
 		if(p.load(path) < 0)
 			continue;

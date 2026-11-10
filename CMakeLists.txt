@@ -1,6 +1,12 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.10)
 
-project(KOBODELUXE)
+project(KOBODELUXE C CXX)
+
+# Default to an optimized build when no build type is given
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+	set(CMAKE_BUILD_TYPE Release CACHE STRING
+		"Build type (Release, Debug, Maintainer)" FORCE)
+endif()
 
 set(KOBO_ORGANIZATION "OlofsonArcade")
 
@@ -10,8 +16,8 @@ set(VERSION_PATCH 0)
 set(VERSION_BUILD 0)
 
 option(WIN32_ZIP_BUILD "Build flat Win32 ZIP archive." OFF)
-option(WORKDIR "Top level build/staging directory."
-	"${KOBODELUXE_SOURCE_DIR}/build")
+set(WORKDIR "${KOBODELUXE_SOURCE_DIR}/build" CACHE PATH
+	"Top level build/staging directory.")
 set(KOBO_EXTRA_LIBRARIES "" CACHE STRING "Extra libraries to link with.")
 
 message(".-----------------------------------------")

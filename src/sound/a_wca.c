@@ -141,7 +141,7 @@ static inline void read_sample(audio_wave_t *w, unsigned s, float *inl, float *i
 		*inr = w->data.f32[s*2+1] * 32768.0f;
 		break;
 	  case AF_MIDI:
-		*inr = *inl = *inr = 0;
+		*inl = *inr = 0;
 		break;
 	}
 }

@@ -32,8 +32,8 @@
 //first if the integer result is stored in little endian format
 //in a file.)
 #define	MAKE_4CC(a, b, c, d)					\
-		((a)&0xff | ((b)<<8)&0xff00 |			\
-		((c)<<16)&0xff0000 | ((d)<<24)&0xff000000)
+		(((a) & 0xff) | (((b) << 8) & 0xff00) |		\
+		(((c) << 16) & 0xff0000) | (((d) << 24) & 0xff000000))
 
 
   ////////////////////////////////////////////////////////////

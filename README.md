@@ -25,3 +25,48 @@
 
        In short, Kobo Deluxe is loads of classical arcade style fun  for  just
        about any machine with graphics and sound!
+
+## Building on Linux
+
+Kobo Deluxe is written against SDL 1.2. Current distributions ship SDL 1.2 as
+sdl12-compat, which runs SDL 1.2 programs on top of SDL2, so the stock
+packages are all that is needed. On Debian or Ubuntu:
+
+```bash
+sudo apt install build-essential cmake libsdl1.2-dev libsdl-image1.2-dev
+```
+
+(On Ubuntu 24.04 and later, `libsdl1.2-dev` is provided by sdl12-compat.)
+
+Then, from the top of the source tree:
+
+```bash
+cmake -B build
+cmake --build build -j
+```
+
+The build type defaults to `Release`. Pass `-DCMAKE_BUILD_TYPE=Debug` for a
+debug build.
+
+### Running
+
+The game runs straight from the build tree and finds its data in `data/`:
+
+```bash
+./build/src/kobodl
+```
+
+Player profiles, scores and the config file go in `~/.kobodeluxe`, which is
+created on first run. Run `./build/src/kobodl -help` for the command line
+options.
+
+### Installing
+
+```bash
+sudo cmake --install build
+```
+
+This installs to `/usr/local` by default; pass `-DCMAKE_INSTALL_PREFIX=...`
+when configuring to change that. The `configure`, `make-all` and
+`build-packages` scripts are the original packaging helpers and are not
+needed for a normal build.

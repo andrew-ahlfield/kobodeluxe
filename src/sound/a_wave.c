@@ -791,15 +791,13 @@ int audio_wave_load(int wid, const char *name, int looped)
 	int using_loadwav = 0;
 
 	/* Prepend path */
-	strncpy(buf, eel_path(), sizeof(buf));
 #ifdef WIN32
-	strncat(buf, "\\", sizeof(buf));
+	snprintf(buf, sizeof(buf), "%s\\%s", eel_path(), name);
 #elif defined MACOS
-	strncat(buf, ":", sizeof(buf));
+	snprintf(buf, sizeof(buf), "%s:%s", eel_path(), name);
 #else
-	strncat(buf, "/", sizeof(buf));
+	snprintf(buf, sizeof(buf), "%s/%s", eel_path(), name);
 #endif
-	strncat(buf, name, sizeof(buf));
 
 	/* Check extension */
 	if(strstr(name, ".raw") || strstr(name, ".RAW"))
@@ -878,15 +876,13 @@ int audio_wave_save(int wid, const char *name)
 		return -1;
 
 	/* Prepend path */
-	strncpy(buf, eel_path(), sizeof(buf));
 #ifdef WIN32
-	strncat(buf, "\\", sizeof(buf));
+	snprintf(buf, sizeof(buf), "%s\\%s", eel_path(), name);
 #elif defined MACOS
-	strncat(buf, ":", sizeof(buf));
+	snprintf(buf, sizeof(buf), "%s:%s", eel_path(), name);
 #else
-	strncat(buf, "/", sizeof(buf));
+	snprintf(buf, sizeof(buf), "%s/%s", eel_path(), name);
 #endif
-	strncat(buf, name, sizeof(buf));
 	log_printf(DLOG, "Saving to \"%s\"\n", buf);
 	/* Check extension */
 	if(strstr(name, ".raw") || strstr(name, ".RAW"))
