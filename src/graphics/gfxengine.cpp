@@ -944,32 +944,32 @@ void gfxengine_t::hide(void)
 }
 
 
-void gfxengine_t::invalidate(SDL_Rect *rect, window_t *window)
+void gfxengine_t::invalidate(SDL_Rect *rect, window_t *wnd)
 {
 	switch(_pages)
 	{
 	  case -1:
 		if(_doublebuf)
-			__invalidate(1, rect, window);
-		__invalidate(0, rect, window);
+			__invalidate(1, rect, wnd);
+		__invalidate(0, rect, wnd);
 		break;
 	  case 0:
 		__invalidate(0, NULL, NULL);
 		break;
 	  case 3:
-		__invalidate(2, rect, window);
+		__invalidate(2, rect, wnd);
 		// Fallthrough!
 	  case 2:
-		__invalidate(1, rect, window);
+		__invalidate(1, rect, wnd);
 		// Fallthrough!
 	  case 1:
-		__invalidate(0, rect, window);
+		__invalidate(0, rect, wnd);
 		break;
 	}
 }
 
 
-void gfxengine_t::__invalidate(int page, SDL_Rect *rect, window_t *window)
+void gfxengine_t::__invalidate(int page, SDL_Rect *rect, window_t *wnd)
 {
 	if(!screen_surface)
 		return;
@@ -1023,7 +1023,7 @@ void gfxengine_t::__invalidate(int page, SDL_Rect *rect, window_t *window)
 	if(dirtyrects[page] < MAX_DIRTYRECTS - 1)
 	{
 		dirtytable[page][dirtyrects[page]] = dr;
-		dirtywtable[page][dirtyrects[page]] = window;
+		dirtywtable[page][dirtyrects[page]] = wnd;
 		++dirtyrects[page];
 	}
 	else

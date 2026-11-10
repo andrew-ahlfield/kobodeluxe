@@ -19,6 +19,7 @@
  * Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include "logger.h"
@@ -133,17 +134,6 @@ static inline pix_t getpix32ic(SDL_Surface *s, int x, int y)
 }
 
 
-static inline pix_t *pix32(SDL_Surface *s, int x, int y)
-{
-	static pix_t dummy = {0x7f, 0x7f, 0x7f, 0x7f};
-	pix_t *p;
-	if((x < 0) || (x >= s->w) || (y < 0) || (y >= s->h))
-		return &dummy;
-	p = (pix_t *)((char *)s->pixels + y * s->pitch);
-	return p + x;
-}
-
-
 static inline void setpix32(SDL_Surface *s, int x, int y, pix_t pix)
 {
 	pix_t *p;
@@ -167,7 +157,7 @@ static inline pix_t getpix32_nc(SDL_Surface *s, int x, int y)
 	{
 		log_printf(ELOG, "Clip in getpix32_nc()!"
 				" x = %d, y = %d\n", x, y);
-*((char *)NULL) = 0;
+		abort();	/* Deliberate crash, to stop in the debugger */
 		return getpix32_empty;
 	}
 #endif
@@ -183,7 +173,7 @@ static inline pix_t getpix32i_nc(SDL_Surface *s, int x, int y)
 	{
 		log_printf(ELOG, "Clip in getpix32i_nc()!"
 				" x = %d, y = %d\n", x>>4, y>>4);
-*((char *)NULL) = 0;
+		abort();	/* Deliberate crash, to stop in the debugger */
 //		return getpix32_empty;
 	}
 	GETPIXI(getpix32)
@@ -201,30 +191,12 @@ static inline void setpix32_nc(SDL_Surface *s, int x, int y, pix_t pix)
 	{
 		log_printf(ELOG, "Clip in setpix32_nc()!"
 				" x = %d, y = %d\n", x, y);
-*((char *)NULL) = 0;
+		abort();	/* Deliberate crash, to stop in the debugger */
 //		return;
 	}
 #endif
 	p[x] = pix;
 }
-
-
-static inline pix_t *pix32_nc(SDL_Surface *s, int x, int y)
-{
-	pix_t *p = (pix_t *)((char *)s->pixels + y * s->pitch);
-#ifdef DEBUG
-//	static pix_t trash;
-	if((x < 0) || (x >= s->w) || (y < 0) || (y >= s->h))
-	{
-		log_printf(ELOG, "Clip in pix32_nc()!"
-				" x = %d, y = %d\n", x, y);
-*((char *)NULL) = 0;
-//		return &trash;
-	}
-#endif
-	return p + x;
-}
-
 
 
 /*--------------------------------------------------
@@ -321,35 +293,35 @@ int s_filter_dither(s_bank_t *b, unsigned first, unsigned frames,
 				/* 2x2 filter */
 				for(x = 0; x < b->w; ++x)
 				{
-					int r, g, b;
+					int r, g, bl;
 					pix_t *pix = p + x;
 					if((x^y)&1)
 					{
 						r = pix->r + ar;
 						g = pix->g + ag;
-						b = pix->b + ab;
+						bl = pix->b + ab;
 						if(r>255)
 							r = 255;
 						if(g>255)
 							g = 255;
-						if(b>255)
-							b = 255;
+						if(bl>255)
+							bl = 255;
 					}
 					else
 					{
 						r = pix->r - ar;
 						g = pix->g - ag;
-						b = pix->b - ab;
+						bl = pix->b - ab;
 						if(r<0)
 							r = 0;
 						if(g<0)
 							g = 0;
-						if(b<0)
-							b = 0;
+						if(bl<0)
+							bl = 0;
 					}
 					pix->r = r;
 					pix->g = g;
-					pix->b = b;
+					pix->b = bl;
 				}
 				break;
 			  case 1:
@@ -357,11 +329,11 @@ int s_filter_dither(s_bank_t *b, unsigned first, unsigned frames,
 				for(x = 0; x < b->w; ++x)
 				{
 					int dr, dg, db;
-					int r, g, b;
+					int r, g, bl;
 					pix_t *pix = p + x;
 					r = pix->r;
 					g = pix->g;
-					b = pix->b;
+					bl = pix->b;
 					if((x^y) & 1)
 					{
 						dr = ar;
@@ -388,7 +360,7 @@ int s_filter_dither(s_bank_t *b, unsigned first, unsigned frames,
 					}
 					r += dr;
 					g += dg;
-					b += db;
+					bl += db;
 
 					if(r>255)
 						r = 255;
@@ -400,26 +372,26 @@ int s_filter_dither(s_bank_t *b, unsigned first, unsigned frames,
 					else if(g<0)
 						g = 0;
 
-					if(b>255)
-						b = 255;
-					else if(b<0)
-						b = 0;
+					if(bl>255)
+						bl = 255;
+					else if(bl<0)
+						bl = 0;
 
 					pix->r = r;
 					pix->g = g;
-					pix->b = b;
+					pix->b = bl;
 				}
 				break;
 			  case 2:
 				/* Random */
 				for(x = 0; x < b->w; ++x)
 				{
-					int r, g, b, z;
+					int r, g, bl, z;
 					pix_t *pix = p + x;
 					z = noise();
 					r = pix->r - ar + (((ar << 1) - 1) & z);
 					g = pix->g - ag + (((ag << 1) - 1) & z);
-					b = pix->b - ab + (((ab << 1) - 1) & z);
+					bl = pix->b - ab + (((ab << 1) - 1) & z);
 
 					if(r>255)
 						r = 255;
@@ -431,14 +403,14 @@ int s_filter_dither(s_bank_t *b, unsigned first, unsigned frames,
 					else if(g<0)
 						g = 0;
 
-					if(b>255)
-						b = 255;
-					else if(b<0)
-						b = 0;
+					if(bl>255)
+						bl = 255;
+					else if(bl<0)
+						bl = 0;
 
 					pix->r = r;
 					pix->g = g;
-					pix->b = b;
+					pix->b = bl;
 				}
 				break;
 			}
@@ -1137,21 +1109,21 @@ int s_filter_noise(s_bank_t *b, unsigned first, unsigned frames,
 					y * s->surface->pitch);
 			for(x = 0; x < b->w; ++x)
 			{
-				int r, g, b;
+				int r, g, bl;
 				pix_t *pix = p + x;
-				int rnd = noise();
-				r = rnd * ar + br + pix->r;
-				g = rnd * ag + bg + pix->g;
-				b = rnd * ab + bb + pix->b;
+				int n = noise();
+				r = n * ar + br + pix->r;
+				g = n * ag + bg + pix->g;
+				bl = n * ab + bb + pix->b;
 				if(r>255)
 					r = 255;
 				if(g>255)
 					g = 255;
-				if(b>255)
-					b = 255;
+				if(bl>255)
+					bl = 255;
 				pix->r = r;
 				pix->g = g;
-				pix->b = b;
+				pix->b = bl;
 			}
 		}
 	}

@@ -159,7 +159,7 @@ int RGN_Blit(SDL_Surface *src, SDL_Rect *sr, int x, int y)
 {
 // FIXME: Clipping is only half done here...
 	int yy0, yy, yy1;
-	int sxmin, sxmax, symin, symax;
+	int sxmin, symin, symax;
 	SDL_Rect sr2;
 	if(!s.region)
 	{
@@ -172,14 +172,12 @@ int RGN_Blit(SDL_Surface *src, SDL_Rect *sr, int x, int y)
 	{
 		sxmin = sr->x;
 		symin = sr->y;
-		sxmax = sxmin + sr->w;
 		symax = symin + sr->h;
 	}
 	else
 	{
 		sxmin = 0;
 		symin = 0;
-		sxmax = src->w;
 		symax = src->h;
 	}
 	yy0 = s.y;

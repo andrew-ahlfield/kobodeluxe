@@ -253,17 +253,17 @@ void _screen::highscores(int t, float fade)
 	for(i = 0, y = 65; i < 10; ++i, y += 18)
 	{
 		static char s[20];
-		float xo, cy;
+		float sxo, cy;
 		int real_y = PIXEL2CS(y) - (int)yo;
 		if(real_y < PIXEL2CS(55) || real_y > PIXEL2CS(165))
 			continue;
 		cy = (PIXEL2CS(y) - yo) - PIXEL2CS(65 + 5*18/2);
-		xo = cy*cy*cy*cy*cy * 1e-16;
+		sxo = cy*cy*cy*cy*cy * 1e-16;
 		snprintf(s, 16, "%d", hi_sc[i]);
-		wmain->center_token_fxp(PIXEL2CS(70)+(int)xo, real_y, s);
+		wmain->center_token_fxp(PIXEL2CS(70)+(int)sxo, real_y, s);
 		snprintf(s, 16, "%d", hi_st[i]);
-		wmain->center_token_fxp(PIXEL2CS((70+125)/2)+(int)xo, real_y, s, -1);
-		wmain->string_fxp(PIXEL2CS(125)+(int)xo, real_y, hi_nm[i]);
+		wmain->center_token_fxp(PIXEL2CS((70+125)/2)+(int)sxo, real_y, s, -1);
+		wmain->string_fxp(PIXEL2CS(125)+(int)sxo, real_y, hi_nm[i]);
 	}
 #if 1
 	if(!flashin(t - 1000))
@@ -621,7 +621,6 @@ int _screen::prepare()
 	const _scene *s = &scene[scene_num];
 	int i, j;
 	int count_core = 0;
-	int c = 0;
 
 	int lc = level > 31 ? 31 : level;
 	int interval_1 = (s->ek1_interval) >> lc;
@@ -645,14 +644,12 @@ int _screen::prepare()
 			{
 				enemies.make(&cannon, i * 16 + 8,
 						j * 16 + 8);
-				c++;
 			}
 			else if(m & CORE)
 			{
 				enemies.make(&core, i * 16 + 8,
 						j * 16 + 8);
 				count_core++;
-				c++;
 			}
 		}
 
@@ -743,12 +740,12 @@ void _screen::render_noise(window_t *win)
 			np = 255, dnp = -dnp / 2;
 		else if(np < 0)
 			np = 0, dnp = -dnp / 2;
-		float level = np * noise_depth * (1.0f - noise_bright) / 255.0f +
+		float nlevel = np * noise_depth * (1.0f - noise_bright) / 255.0f +
 				noise_bright;
 		for(int x = 0; x < xmax; ++x)
 			win->sprite_fxp(PIXEL2CS(x<<NOISE_SIZEX_LOG2) - xo,
 					PIXEL2CS((int)fy),
-					noise_source, (int)(level * 15.0f +
+					noise_source, (int)(nlevel * 15.0f +
 					(float)pubrand.get(8) / 256.0f));
 	}
 }

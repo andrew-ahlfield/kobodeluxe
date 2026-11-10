@@ -1952,7 +1952,7 @@ void st_profile_audio_t::post_render()
 	wmain->font(B_NORMAL_FONT);
 	Uint32 fgc = wmain->map_rgb(0xffcc00);
 	Uint32 bgc = wmain->map_rgb(0x006600);
-	char buf[40];
+	char buf[256];
 	for(int i = 0; i < AUDIO_CPU_FUNCTIONS; ++i)
 	{
 		int perc = (int)(audio_cpu_function[i] / audio_cpu_total * 100.0);

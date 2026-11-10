@@ -94,7 +94,7 @@ int audio_plugin_state(audio_plugin_t *p, audio_fxstates_t new_state)
 }
 
 
-int default_state(struct audio_plugin_t *p, audio_fxstates_t new_state)
+static int default_state(struct audio_plugin_t *p, audio_fxstates_t new_state)
 {
 	if(new_state > p->current_state)
 		switch(new_state)
@@ -133,7 +133,7 @@ int default_state(struct audio_plugin_t *p, audio_fxstates_t new_state)
 			EMULBUF_FRAMES : frames),		\
 			s < frames; s += f)
 
-void default_control(struct audio_plugin_t *p, unsigned ctl, int arg)
+static void default_control(struct audio_plugin_t *p, unsigned ctl, int arg)
 {
 	if((ctl < p->controls) && p->ctl)
 		p->ctl[ctl] = arg;

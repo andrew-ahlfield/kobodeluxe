@@ -135,7 +135,7 @@ int _myship::init()
 }
 
 
-void _myship::explode(int x, int y)
+void _myship::explode(int ex, int ey)
 {
 	if(explo_time == 56)
 		manage.noise_out(1000);
@@ -152,7 +152,7 @@ void _myship::explode(int x, int y)
 		int vy = dy * (4096 - d) >> 8;
 		dx = dx * d >> 12;
 		dy = dy * d >> 12;
-		enemies.make(enemies.randexp(), x + dx, y + dy, vx, vy,
+		enemies.make(enemies.randexp(), ex + dx, ey + dy, vx, vy,
 				explo_time >> 4);
 	}
 	++explo_time;

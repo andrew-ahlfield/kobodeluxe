@@ -37,7 +37,7 @@
 
 script_t eel_scripttab[MAX_SCRIPTS];
 
-int eel_script_alloc()
+static int eel_script_alloc(void)
 {
         int h = 0;
         while(h < MAX_SCRIPTS)

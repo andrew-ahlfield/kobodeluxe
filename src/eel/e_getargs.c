@@ -89,7 +89,7 @@ void eel_clear_args(int first)
 }
 
 
-void eel_remove_arg(int pos)
+static void eel_remove_arg(int pos)
 {
 	int i;
 	eel_d_freestring(eel_args + pos);
@@ -99,18 +99,6 @@ void eel_remove_arg(int pos)
 		eel_arg_tokens[i-1] = eel_arg_tokens[i];
 	}
 	--eel_arg_count;
-}
-
-
-/*
- * Remove all arguments in the range ]start, end[.
- * (That is, not including args 'start' or 'end'.)
- */
-void eel_collapse(int start, int end)
-{
-	int i;
-	for(i = start + 1; i < end; ++i)
-		eel_remove_arg(i);
 }
 
 
@@ -353,7 +341,6 @@ log_printf(D3LOG, "\n");
 static int eval(int report_eoln)
 {
 	int tk = EOF;
-	int prev_tk;
 	int expect_operator = 0;
 	int tokens = 0;
 	int start = eel_arg_count;
@@ -367,7 +354,6 @@ static int eval(int report_eoln)
 	 */
 	while(1)
 	{
-		prev_tk = tk;
 		tk = eel_lex(report_eoln);
 		switch(tk)
 		{

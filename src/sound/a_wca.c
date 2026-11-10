@@ -115,150 +115,6 @@ static inline unsigned _next_block(unsigned pos, unsigned limit)
  *	regardless of waveform format.
  */
 
-static inline void read_sample(audio_wave_t *w, unsigned s, float *inl, float *inr)
-{
-	switch(w->format)
-	{
-	  case AF_MONO8:
-		*inr = *inl = (float)(w->data.si8[s]<<8);
-		break;
-	  case AF_STEREO8:
-		*inl = (float)(w->data.si8[s*2]<<8);
-		*inr = (float)(w->data.si8[s*2+1]<<8);
-		break;
-	  case AF_MONO16:
-		*inr = *inl = (float)w->data.si16[s];
-		break;
-	  case AF_STEREO16:
-		*inl = (float)w->data.si16[s*2];
-		*inr = (float)w->data.si16[s*2+1];
-		break;
-	  case AF_MONO32:
-		*inr = *inl = w->data.f32[s] * 32768.0f;
-		break;
-	  case AF_STEREO32:
-		*inl = w->data.f32[s*2] * 32768.0f;
-		*inr = w->data.f32[s*2+1] * 32768.0f;
-		break;
-	  case AF_MIDI:
-		*inl = *inr = 0;
-		break;
-	}
-}
-
-
-static inline void write_sample(audio_wave_t *w, unsigned s, float outl, float outr)
-{
-	if(outl < -32768.0f)
-		outl = -32768.0f;
-	else if(outl > 32767.0f)
-		outl = 32767.0f;
-	if(outr < -32768.0f)
-		outr = -32768.0f;
-	else if(outr > 32767.0f)
-		outr = 32767.0f;
-
-	switch(w->format)
-	{
-	  case AF_MONO8:
-		w->data.si8[s] = (int)outl >> 8;
-		break;
-	  case AF_STEREO8:
-		w->data.si8[s*2] = (int)outl >> 8;
-		w->data.si8[s*2+1] = (int)outr >> 8;
-		break;
-	  case AF_MONO16:
-		w->data.si16[s] = (Sint16)outl;
-		break;
-	  case AF_STEREO16:
-		w->data.si16[s*2] = (Sint16)outl;
-		w->data.si16[s*2+1] = (Sint16)outr;
-		break;
-	  case AF_MONO32:
-		w->data.f32[s] = outl * ONEDIV32K;
-		break;
-	  case AF_STEREO32:
-		w->data.f32[s*2] = outl * ONEDIV32K;
-		w->data.f32[s*2+1] = outr * ONEDIV32K;
-		break;
-	  case AF_MIDI:
-		break;
-	}
-}
-
-
-static inline void add_sample(audio_wave_t *w, unsigned s, float outl, float outr)
-{
-	float l, r;
-	switch(w->format)
-	{
-	  case AF_MONO8:
-		l = (float)(w->data.si8[s]<<8) + outl;
-		if(l > 32767.0f)
-			w->data.si8[s] = 127;
-		else if(l < -32768.0f)
-			w->data.si8[s] = -128;
-		else
-			w->data.si8[s] = (int)l >> 8;
-		break;
-	  case AF_STEREO8:
-		s <<= 1;
-		l = (float)(w->data.si8[s]<<8) + outl;
-		if(l > 32767.0f)
-			w->data.si8[s] = 127;
-		else if(l < -32768.0f)
-			w->data.si8[s] = -128;
-		else
-			w->data.si8[s] = (int)l >> 8;
-		++s;
-		r = (float)(w->data.si8[s]<<8) + outr;
-		if(r > 32767.0f)
-			w->data.si8[s] = 127;
-		else if(r < -32768.0f)
-			w->data.si8[s] = -128;
-		else
-			w->data.si8[s] = (int)r >> 8;
-		break;
-	  case AF_MONO16:
-		l = (float)w->data.si16[s] + outl;
-		if(l > 32767.0f)
-			w->data.si16[s] = 32767;
-		else if(l < -32768.0f)
-			w->data.si16[s] = -32768;
-		else
-			w->data.si16[s] = (Sint16)l;
-		break;
-	  case AF_STEREO16:
-		s <<= 1;
-		l = (float)w->data.si16[s] + outl;
-		if(l > 32767.0f)
-			w->data.si16[s] = 32767;
-		else if(l < -32768.0f)
-			w->data.si16[s] = -32768;
-		else
-			w->data.si16[s] = (Sint16)l;
-		++s;
-		r = (float)w->data.si16[s] + outr;
-		if(r > 32767.0f)
-			w->data.si16[s] = 32767;
-		else if(r < -32768.0f)
-			w->data.si16[s] = -32768;
-		else
-			w->data.si16[s] = (Sint16)r;
-		break;
-	  case AF_MONO32:
-		w->data.f32[s] += outl * ONEDIV32K;
-		break;
-	  case AF_STEREO32:
-		w->data.f32[s*2] += outl * ONEDIV32K;
-		w->data.f32[s*2+1] += outr * ONEDIV32K;
-		break;
-	  case AF_MIDI:
-		break;
-	}
-}
-
-
 /*
  * Block based versions
  */
@@ -559,13 +415,13 @@ typedef struct modulator_t
 	unsigned	remain;		/* samples left of current section */
 } modulator_t;
 
-void _env_reset(modulator_t *e)
+static void _env_reset(modulator_t *e)
 {
 	e->steps = 0;
 	e->v[0] = e->t[0] = e->d[0] = 0.0f;
 }
 
-void _env_add(modulator_t *e, float duration, float v)
+static void _env_add(modulator_t *e, float duration, float v)
 {
 	if(e->steps >= WCA_MAX_ENV_STEPS)
 	{

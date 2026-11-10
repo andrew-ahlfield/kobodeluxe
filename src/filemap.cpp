@@ -576,10 +576,8 @@ int filemapper_t::recurse_get(char *result, const char *ref, int kind,
 	kclass[len] = 0;
 
 	fm_key_t *k = NULL;
-	int hits = 0;
 	while( (k = getkey(k, kclass)) )
 	{
-		++hits;
 		snprintf(buffer, FM_BUFFER_SIZE, "%s/%s", k->path, obj);
 		buffer[FM_BUFFER_SIZE-1] = 0;
 #if 0
@@ -618,14 +616,6 @@ int filemapper_t::recurse_get(char *result, const char *ref, int kind,
 			return 1;
 		}
 	}
-#if 0
-	if(!hits)
-	{
-		for(int s=0; s<level; ++s)
-			log_printf(DLOG, "  ");
-		log_printf(DLOG, "No paths registered for '%s'!\n", kclass);
-	}
-#endif
 	return 0;
 }
 

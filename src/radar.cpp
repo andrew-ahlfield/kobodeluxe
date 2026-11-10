@@ -189,10 +189,10 @@ void radar_window_t::mode(radar_modes_t newmode)
 }
 
 
-void radar_window_t::set_scroll(int xs, int ys)
+void radar_window_t::set_scroll(int sx, int sy)
 {
-	xoffs = (xs + MAP_SIZEX / 2) & (MAP_SIZEX - 1);
-	yoffs = (ys + MAP_SIZEY / 2) & (MAP_SIZEY - 1);
+	xoffs = (sx + MAP_SIZEX / 2) & (MAP_SIZEX - 1);
+	yoffs = (sy + MAP_SIZEY / 2) & (MAP_SIZEY - 1);
 }
 
 

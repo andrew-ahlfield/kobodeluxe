@@ -148,12 +148,6 @@ static inline int __release(unsigned ch, unsigned key)
 }
 
 
-/* Returns 1 if the specified key on the specified channel is down. */
-static inline int __is_down(unsigned ch, int key)
-{
-	return (m[ch].tag[key] != -1);
-}
-
 	
 static void midicon_note_off(unsigned ch, unsigned pitch, unsigned vel)
 {

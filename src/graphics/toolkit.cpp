@@ -183,7 +183,7 @@ int ct_widget_t::value()
 	ct_engine_t::
 ----------------------------------------------------------*/
 
-void default_render_highlight(ct_widget_t *wg)
+static void default_render_highlight(ct_widget_t *wg)
 {
 	Uint32 hlc[6];
 	hlc[0] = wg->map_rgb(0x440000);
@@ -456,7 +456,7 @@ void ct_list_t::change(int delta)
 
 void ct_list_t::render()
 {
-	char buf[128];
+	char buf[256];
 	const char *ic;
 	if(_selected)
 		ic = _selected->caption();

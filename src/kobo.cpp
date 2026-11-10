@@ -1373,7 +1373,7 @@ void KOBO_main::pause_game()
 }
 
 
-void kobo_render_highlight(ct_widget_t *wg)
+static void kobo_render_highlight(ct_widget_t *wg)
 {
 	screen.set_highlight(wg->y() + wg->height() / 2 - wmain->y(),
 			wg->height());
@@ -2047,13 +2047,13 @@ static void put_options_man()
 }
 
 
-extern "C" void emergency_close(void)
+static void emergency_close(void)
 {
 	km.close();
 }
 
 
-extern "C" RETSIGTYPE breakhandler(int dummy)
+static RETSIGTYPE breakhandler(int dummy)
 {
 	/* For platforms that drop the handlers on the first signal... */
 	signal(SIGTERM, breakhandler);

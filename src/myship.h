@@ -63,7 +63,7 @@ class _myship
 	static void state(_myship_state s);
 	static void shot_single(int i, int dir, int offset);
 	static void apply_position();
-	static void explode(int x, int y);
+	static void explode(int ex, int ey);
   public:
 	 _myship();
 	static inline int get_x()

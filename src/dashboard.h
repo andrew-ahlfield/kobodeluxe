@@ -50,7 +50,6 @@ class dashboard_window_t : public window_t
 	dashboard_modes_t	_mode;
 	int			progress_index;
 	float			*progress_table;
-	Uint32			progress_time;
 	int			progress_bench;
 	void render_progress();
   public:

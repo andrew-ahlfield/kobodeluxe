@@ -370,7 +370,7 @@ static void _audio_callback(void *ud, Uint8 *stream, int len)
 #define	TS(x)
 #endif
 	unsigned remaining_frames;
-	Sint16 *outbuf = (Sint16 *)stream;
+	Sint16 *outbuf = (Sint16 *)(void *)stream;
 
 	audio_last_callback = SDL_GetTicks();
 	sync_time(audio_last_callback);
@@ -640,7 +640,8 @@ static void _close_mixing(void)
 	if(!_mixing_open)
 		return;
 
-/* KLUDGE */	lim_close(&limiter);
+	/* KLUDGE */
+	lim_close(&limiter);
 	for(i = 0; i < AUDIO_MAX_BUSSES; ++i)
 	{
 		free(busbufs[i]);

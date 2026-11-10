@@ -676,9 +676,9 @@ void _manage::regenerate()
 }
 
 
-void _manage::select_scene(int scene, int redraw_map)
+void _manage::select_scene(int new_scene, int redraw_map)
 {
-        scene_num = scene;
+	scene_num = new_scene;
 	put_info();
 	if(redraw_map)
 		screen.init_scene(-scene_num - 1);
