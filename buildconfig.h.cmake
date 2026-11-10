@@ -19,6 +19,7 @@
 #define	RETSIGTYPE	@RETSIGTYPE@
 
 #define	PACKAGE			"@PACKAGE@"
+#define	KOBO_PACKAGE_NAME	"@KOBO_PACKAGE_NAME@"
 #define	KOBO_VERSION_STRING	"@VERSION_STRING@"
 #define	KOBO_MAKE_VERSION(major, minor, micro, build)	\
 		(((major) << 24) | ((minor) << 16) | ((micro) << 8) | (build))

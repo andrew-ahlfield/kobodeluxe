@@ -117,8 +117,30 @@ if(MINGW)
 endif(MINGW)
 
 add_executable(kobodl WIN32 MACOSX_BUNDLE ${sources} ${RES_FILES})
-set_target_properties(kobodl PROPERTIES OUTPUT_NAME
-	"kobodl${KOBO_EXE_SUFFIX}")
+if(APPLE)
+	set_target_properties(kobodl PROPERTIES
+		OUTPUT_NAME "${KOBO_BUNDLE_NAME}"
+		MACOSX_BUNDLE_BUNDLE_NAME "Kobo Deluxe"
+		MACOSX_BUNDLE_GUI_IDENTIFIER "net.olofson.kobodeluxe"
+		MACOSX_BUNDLE_BUNDLE_VERSION "${KOBO_BASE_VERSION}"
+		MACOSX_BUNDLE_SHORT_VERSION_STRING "${VERSION_STRING}"
+		MACOSX_BUNDLE_ICON_FILE "kobodl.icns"
+		MACOSX_BUNDLE_COPYRIGHT "GPL-2.0-or-later")
+	set(KOBO_ICNS "${KOBODELUXE_SOURCE_DIR}/icons/macos/kobodl.icns")
+	if(EXISTS "${KOBO_ICNS}")
+		target_sources(kobodl PRIVATE "${KOBO_ICNS}")
+		set_source_files_properties("${KOBO_ICNS}" PROPERTIES
+			MACOSX_PACKAGE_LOCATION "Resources")
+	endif()
+else()
+	set_target_properties(kobodl PROPERTIES OUTPUT_NAME
+		"kobodl${KOBO_EXE_SUFFIX}")
+endif()
+
+if(MINGW)
+	# Avoid shipping (and mismatching) the GCC runtime DLLs
+	target_link_options(kobodl PRIVATE -static-libgcc -static-libstdc++)
+endif()
 
 target_link_libraries(kobodl ${SDL_LIBRARY} ${SDLIMAGE_LIBRARY} ${KOBO_EXTRA_LIBRARIES})
 #target_link_libraries(kobodl ${SDL2_LIBRARIES} ${SDL2IMAGE_LIBRARIES}
@@ -166,6 +188,9 @@ if(NOT WIN32)
 	set(KOBO_DATADIR "${CMAKE_INSTALL_PREFIX}/share/${KOBO_PACKAGE_NAME}")
 	set(KOBO_USERDIR "HOME>>.${KOBO_PACKAGE_NAME}")
 	set(KOBO_SYSCONFDIR "/etc")
+else(NOT WIN32)
+	# Program Files is not writable, so keep user data in %APPDATA%
+	set(KOBO_USERDIR "APPDATA>>${KOBO_APPLICATION}")
 endif(NOT WIN32)
 set(KOBO_CONFIGFILE "${KOBO_PACKAGE_NAME}.cfg")
 
@@ -189,4 +214,26 @@ set(KOBODELUXE_AUTO_MESSAGE
 configure_file(${CMAKE_SOURCE_DIR}/buildconfig.h.cmake
 	${CMAKE_BINARY_DIR}/include/buildconfig.h)
 
-install(TARGETS kobodl DESTINATION "${KOBO_BIN_DIR}")
+if(WIN32)
+	# Ship the DLLs kobodl.exe needs. SDL.dll (sdl12-compat) loads SDL2.dll
+	# at runtime, so that one is not in any import table and is added here.
+	get_filename_component(KOBO_SDL_LIBDIR "${SDL_LIBRARY_TEMP}" DIRECTORY)
+	find_file(KOBO_SDL2_DLL SDL2.dll
+		HINTS "${KOBO_SDL_LIBDIR}/../bin" PATH_SUFFIXES bin REQUIRED)
+	get_filename_component(KOBO_DLL_DIR "${KOBO_SDL2_DLL}" DIRECTORY)
+	install(TARGETS kobodl DESTINATION "${KOBO_BIN_DIR}")
+	find_program(KOBO_OBJDUMP NAMES
+		${CMAKE_SYSTEM_PROCESSOR}-w64-mingw32-objdump objdump REQUIRED)
+	install(CODE "
+		set(KOBO_EXE \"$<TARGET_FILE:kobodl>\")
+		set(KOBO_DLL_DIR \"${KOBO_DLL_DIR}\")
+		set(KOBO_DEST \"\${CMAKE_INSTALL_PREFIX}/${KOBO_BIN_DIR}\")
+		set(KOBO_OBJDUMP \"${KOBO_OBJDUMP}\")
+		include(\"${KOBODELUXE_SOURCE_DIR}/cmake/BundleWindowsDlls.cmake\")
+	")
+	install(FILES "${KOBO_SDL2_DLL}" DESTINATION "${KOBO_BIN_DIR}")
+elseif(APPLE)
+	install(TARGETS kobodl BUNDLE DESTINATION "${KOBO_BIN_DIR}")
+else()
+	install(TARGETS kobodl DESTINATION "${KOBO_BIN_DIR}")
+endif()

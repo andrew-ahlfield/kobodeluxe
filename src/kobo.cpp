@@ -130,22 +130,32 @@ static void main_cleanup()
 	Various functions
 ----------------------------------------------------------*/
 
-#if defined(KOBO_USERDIR) && !defined(WIN32)
+#ifdef KOBO_USERDIR
 /*
- * Create the per-user directory (default ~/.kobodeluxe) on first run, so
- * that player profiles, scores and the config file can be saved.
+ * Create the per-user directory on first run, so that player profiles,
+ * scores and the config file can be saved. KOBO_USERDIR is of the form
+ * "<ENV>>dir", e.g. "HOME>>.kobodeluxe" or, on Windows,
+ * "APPDATA>>KoboDeluxe", where <ENV> names an environment variable.
  */
 static void create_userdir(void)
 {
-	const char *prefix = "HOME>>";
-	const char *home = getenv("HOME");
 	const char *dir = KOBO_USERDIR;
+	const char *sep = strstr(dir, ">>");
+	char var[16];
 	char buf[1024];
-	if(!home || strncmp(dir, prefix, strlen(prefix)) != 0)
+	if(!sep || (sep - dir) >= (int)sizeof(var))
 		return;
-	dir += strlen(prefix);
-	snprintf(buf, sizeof(buf), "%s/%s", home, dir);
-	if((::mkdir(buf, 0755) == 0))
+	memcpy(var, dir, sep - dir);
+	var[sep - dir] = 0;
+	const char *base = getenv(var);
+	if(!base)
+		return;
+	snprintf(buf, sizeof(buf), "%s/%s", base, sep + 2);
+#ifdef WIN32
+	if(::mkdir(buf) == 0)
+#else
+	if(::mkdir(buf, 0755) == 0)
+#endif
 		log_printf(ULOG, "Created user directory \"%s\".\n", buf);
 }
 #endif
@@ -154,7 +164,7 @@ static void create_userdir(void)
 static void setup_dirs(char *xpath)
 {
 	fmap->exepath(xpath);
-#if defined(KOBO_USERDIR) && !defined(WIN32)
+#ifdef KOBO_USERDIR
 	create_userdir();
 #endif
 
@@ -162,6 +172,10 @@ static void setup_dirs(char *xpath)
 	fmap->addpath("DATA", KOBO_DATADIR);
 #endif
 	fmap->addpath("DATA", "EXE>>");		// Next to the executable
+	// Unix layout relative to the executable: <prefix>/bin -> <prefix>/share
+	fmap->addpath("DATA", "EXE>>../share/" KOBO_PACKAGE_NAME);
+	// macOS app bundle: Contents/MacOS/kobodl -> Contents/Resources
+	fmap->addpath("DATA", "EXE>>../Resources");
 	// Uninstalled build tree: <source>/build/src/kobodl -> <source>/data
 	fmap->addpath("DATA", "EXE>>../../data");
 

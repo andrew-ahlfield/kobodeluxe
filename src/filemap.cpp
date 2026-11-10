@@ -82,6 +82,12 @@ filemapper_t::filemapper_t()
 	char *home = (char *)getenv("HOME");
 	if(home)
 		addpath("HOME", home);
+#ifdef WIN32
+	/* Per-user application data (KOBO_USERDIR on Windows) */
+	char *appdata = (char *)getenv("APPDATA");
+	if(appdata)
+		addpath("APPDATA", sys2unix(appdata));
+#endif
 }
 
 

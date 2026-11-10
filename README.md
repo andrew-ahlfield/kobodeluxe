@@ -70,3 +70,47 @@ This installs to `/usr/local` by default; pass `-DCMAKE_INSTALL_PREFIX=...`
 when configuring to change that. The `configure`, `make-all` and
 `build-packages` scripts are the original packaging helpers and are not
 needed for a normal build.
+
+## Installers
+
+Each script below builds one platform's installer from a clean tree. An
+optional argument adds a version suffix, e.g. `-rc1` for a release
+candidate.
+
+| Platform | Script | Runs on | Output |
+|---|---|---|---|
+| Debian, Ubuntu | `packaging/build-linux.sh` | Linux | `build-linux/kobodeluxe_<version>_amd64.deb` |
+| Windows 10/11 (x64) | `packaging/build-windows.sh` | Linux | `build-windows/KoboDeluxe-<version>-windows-x64.exe` |
+| macOS (Apple silicon) | `packaging/build-macos.sh` | macOS | `build-macos/KoboDeluxe-<version>-macos-arm64.dmg` |
+
+### Windows
+
+The Windows build is cross-compiled on Linux with mingw-w64, using the
+SDL 1.2 (sdl12-compat), SDL2 and SDL_image 1.2 DLLs from MSYS2, which the
+script downloads. The installer is made with NSIS:
+
+```bash
+sudo apt install mingw-w64 nsis zstd
+packaging/build-windows.sh
+```
+
+The installer puts the game in Program Files with a Start menu entry and an
+uninstaller. Player profiles, scores and settings go in
+`%APPDATA%\KoboDeluxe`.
+
+### macOS
+
+Build on the Mac itself, with Xcode or its command line tools and Homebrew
+installed. The script installs cmake and sdl12-compat with Homebrew, and
+builds SDL_image 1.2 from source into `~/devel/kobo-deps`, since Homebrew no
+longer has it:
+
+```bash
+packaging/build-macos.sh
+```
+
+The disk image holds `KoboDeluxe.app`, with its libraries inside it, and a
+shortcut to Applications. The app is signed ad hoc, not with an Apple
+Developer ID, so the first time it is opened macOS will refuse; open it once
+from System Settings > Privacy & Security > Open Anyway. Player data goes in
+`~/.kobodeluxe`.

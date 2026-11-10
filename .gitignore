@@ -26,3 +26,9 @@
 *.exe
 *.out
 *.app
+
+# Build trees
+/build/
+/build-linux/
+/build-windows/
+/build-macos/
