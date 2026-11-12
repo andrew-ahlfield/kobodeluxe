@@ -192,15 +192,15 @@ void _screen::title(int t, float fade, int mode)
 		wmain->font(B_MEDIUM_FONT);
 		wmain->center(145, "CHEAT MODE");
 	}
-#if 1
-	// WIP notice
+	// Where to find the game: the code, then (set apart, so the two don't
+	// read as one long URL) the original home page
 	if(!flashin(t - 2000))
 	{
 		wmain->font(B_MEDIUM_FONT);
-		wmain->center(170, "This is a Work in Progress!");
-		wmain->center(180, "Check http://olofson.net/kobodl");
+		wmain->center(155, "See the latest at:");
+		wmain->center(165, "github.com/olofson/kobodeluxe");
+		wmain->center(180, "olofson.net/kobodl");
 	}
-#endif
 }
 
 
@@ -466,7 +466,9 @@ void _screen::scroller()
 			"  -  "
 			"Windows 95/98/ME  -  "
 			"Windows 2000/XP  -  "
+			"Windows 10/11  -  "
 			"Mac OS X (PPC)  -  "
+			"macOS (Apple silicon, Intel)  -  "
 			"BeOS (x86, PPC)  -  "
 			"AmigaOS (68k, PPC)  -  "
 			"Solaris (x86, SPARC)  -  "
@@ -504,6 +506,7 @@ void _screen::scroller()
 			"      Marianne Ibbotson (\"Autopause\")"
 			"      Sam Palmer (Windows testing)"
 			"      Michael Sterrett (glSDL issues)"
+			"      Andrew Ahlfield (Linux, Windows & macOS builds)"
 			"      Sam Lantinga & Others (SDL)"
 			"      Members of the SDL Mailing List"
 			"                        "
