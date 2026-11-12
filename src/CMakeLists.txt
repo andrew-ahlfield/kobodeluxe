@@ -140,6 +140,11 @@ else()
 		"kobodl${KOBO_EXE_SUFFIX}")
 endif()
 
+if(APPLE)
+	target_sources(kobodl PRIVATE macos_hotkeys.c)
+	target_link_libraries(kobodl "-framework CoreGraphics")
+endif()
+
 if(MINGW)
 	# Avoid shipping (and mismatching) the GCC runtime DLLs
 	target_link_options(kobodl PRIVATE -static-libgcc -static-libstdc++)

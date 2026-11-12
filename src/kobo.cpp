@@ -60,6 +60,7 @@ extern "C" {
 #include "options.h"
 #include "myship.h"
 #include "enemies.h"
+#include "macos_hotkeys.h"
 
 #define	MAX_FPS_RESULTS	64
 
@@ -1439,6 +1440,7 @@ int KOBO_main::open()
 
 void KOBO_main::close()
 {
+	macos_block_system_hotkeys(0);
 	close_js();
 	RGN_FreeRegion(logo_region);
 	logo_region = NULL;
@@ -1620,6 +1622,18 @@ void kobo_gfxengine_t::frame()
 		stop();
 		return;
 	}
+
+	/*
+	 * While playing, keep Ctrl+arrow and friends for the game instead of
+	 * the system shortcuts (Spaces, Mission Control) they would trigger.
+	 * Menus and the pause screen leave them alone, so Cmd+Tab works
+	 * there.
+	 */
+	gamestate_t *cur = gsm.current();
+	macos_block_system_hotkeys(
+			(SDL_GetAppState() & SDL_APPINPUTFOCUS) &&
+			(cur == &st_game || cur == &st_get_ready ||
+			cur == &st_game_over));
 
 	/*
 	 * Process input
