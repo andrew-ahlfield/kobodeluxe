@@ -81,7 +81,7 @@ candidate.
 |---|---|---|---|
 | Debian, Ubuntu | `packaging/build-linux.sh` | Linux | `build-linux/kobodeluxe_<version>_amd64.deb` |
 | Windows 10/11 (x64) | `packaging/build-windows.sh` | Linux | `build-windows/KoboDeluxe-<version>-windows-x64.exe` |
-| macOS (Apple silicon) | `packaging/build-macos.sh` | macOS | `build-macos/KoboDeluxe-<version>-macos-arm64.dmg` |
+| macOS 11+ (Apple silicon and Intel) | `packaging/build-macos.sh` | macOS | `build-macos/KoboDeluxe-<version>-macos-universal.dmg` |
 
 The application icons in `icons/` are drawn from the game's own sprites by
 `icons/make-icons.py`, and the disk image background by
@@ -105,10 +105,14 @@ uninstaller. Player profiles, scores and settings go in
 
 ### macOS
 
-Build on the Mac itself, with Xcode or its command line tools and Homebrew
-installed. The script installs cmake, libpng and sdl12-compat with Homebrew,
-and builds SDL_image 1.2 (with libpng) from source into `~/devel/kobo-deps`,
-since Homebrew no longer has it. The disk image is laid out by dmgbuild:
+Build on a Mac, with Xcode or its command line tools and Homebrew
+installed. The app is universal (Apple silicon and Intel) and runs on
+macOS 11 and later. Homebrew's libraries only cover the build machine's
+architecture, so the script uses Homebrew just for cmake and pkgconf, and
+builds libpng, SDL3, sdl2-compat, sdl12-compat and SDL_image 1.2 from
+pinned, checksummed source releases into `~/devel/kobo-deps/universal`
+(set `KOBO_DEPS` to put them elsewhere). That takes a few minutes the first
+time only. The disk image is laid out by dmgbuild:
 
 ```bash
 brew install pipx && pipx install dmgbuild
@@ -119,6 +123,18 @@ The disk image holds `KoboDeluxe.app`, with its libraries and documents
 inside it, and a shortcut to drag it onto Applications. The script deletes
 every other copy of the app it made, so Launchpad only ever lists the
 installed one. The app is signed ad hoc, not with an Apple
-Developer ID, so the first time it is opened macOS will refuse; open it once
-from System Settings > Privacy & Security > Open Anyway. Player data goes in
-`~/.kobodeluxe`.
+Developer ID, so if the disk image arrived by browser download, AirDrop or
+Messages, macOS will refuse to open the app at first. Either open it once
+from System Settings > Privacy & Security > Open Anyway, or after
+installing run:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/KoboDeluxe.app
+```
+
+Player data goes in `~/.kobodeluxe`.
+
+While a game is being played, the app turns off the system keyboard
+shortcuts (Mission Control, Spaces, Cmd+Tab), since Ctrl, the fire button,
+plus the arrow keys would otherwise switch desktops. Menus and the pause
+screen leave them on.
