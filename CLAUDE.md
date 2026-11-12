@@ -27,8 +27,9 @@ four files:
 | `SHA256SUMS.txt` | anywhere | `sha256sum` of the other three, made last |
 
 The Mac side tags the release, builds the disk image and creates the
-GitHub release as a **draft** with the notes and the disk image. The
-Linux build box then adds the rest:
+GitHub release with the notes and the disk image, usually as a draft,
+though it may already be published (uploading to a published release
+works the same). The Linux build box then adds the rest:
 
 ```bash
 git fetch --tags && git checkout vX.Y.Z      # the release's tag, exactly
@@ -42,8 +43,9 @@ sha256sum KoboDeluxe-X.Y.Z-* > SHA256SUMS.txt   # all three, nothing else
 gh release upload vX.Y.Z -R andrew-ahlfield/kobodeluxe SHA256SUMS.txt
 ```
 
-Then check the draft lists all four files, and stop: **don't publish
-it**. The Mac side publishes once the files are checked. A final release
+Then check the release lists all four files, and stop. If it's still a
+draft, **don't publish it**; the Mac side publishes once the files are
+checked. A final release
 is published with `--latest` and not as a pre-release, which is what
 puts it in the repo page's sidebar as **Latest**. Release candidates are
 pre-releases and never show there.
