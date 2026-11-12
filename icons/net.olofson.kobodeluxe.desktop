@@ -8,4 +8,4 @@ TryExec=kobodl
 Exec=kobodl
 Icon=kobodl
 Terminal=false
-Categories=Application;Game;ArcadeGame;2DGraphics;
+Categories=Game;ArcadeGame;
