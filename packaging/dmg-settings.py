@@ -13,7 +13,8 @@ format = "ULFO"
 filesystem = "APFS"
 files = [app]
 symlinks = {"Applications": "/Applications"}
-hide_extensions = [app_name]
+# No hide_extensions: it sets a Finder flag on the app folder itself, and
+# codesign then rejects the signature of every copy installed from here.
 
 icon = defines["icon"]
 background = defines["background"]

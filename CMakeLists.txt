@@ -125,16 +125,26 @@ if(APPLE)
 	if(KOBO_SDL3_DYLIB)
 		list(APPEND KOBO_RUNTIME_DYLIBS "${KOBO_SDL3_DYLIB}")
 	endif()
+	# Where fixup_bundle looks for libraries referenced by @rpath (the
+	# SDL stack all lives in one prefix)
+	get_filename_component(KOBO_LIB_DIRS "${KOBO_SDL2_DYLIB}" DIRECTORY)
 	# (KOBO_BIN_DIR is "." here; fixup_bundle compares paths as strings)
 	set(KOBO_APP "\${CMAKE_INSTALL_PREFIX}/${KOBO_BUNDLE_NAME}.app")
+	# Homebrew installs its libraries read-only, and codesign refuses
+	# files with Finder info or other extended attributes, so make the
+	# bundle writable and clear those before signing.
 	install(CODE "
 		include(BundleUtilities)
 		file(COPY ${KOBO_RUNTIME_DYLIBS}
 			DESTINATION \"${KOBO_APP}/Contents/Frameworks\"
 			FOLLOW_SYMLINK_CHAIN)
-		fixup_bundle(\"${KOBO_APP}\" \"\" \"\")
+		fixup_bundle(\"${KOBO_APP}\" \"\" \"${KOBO_LIB_DIRS}\")
+		execute_process(COMMAND chmod -R u+w \"${KOBO_APP}\"
+			COMMAND_ERROR_IS_FATAL ANY)
+		execute_process(COMMAND xattr -cr \"${KOBO_APP}\"
+			COMMAND_ERROR_IS_FATAL ANY)
 		execute_process(COMMAND codesign --force --deep --sign -
-			\"${KOBO_APP}\")
+			\"${KOBO_APP}\" COMMAND_ERROR_IS_FATAL ANY)
 	")
 endif()
 
@@ -166,8 +176,16 @@ set(CPACK_PACKAGE_DESCRIPTION "Frantic 80's style 2D shooter, inspired by the lo
 if(WIN32)
 	set(CPACK_PACKAGE_FILE_NAME "KoboDeluxe-${VERSION_STRING}-windows-x64")
 elseif(APPLE)
+	list(LENGTH CMAKE_OSX_ARCHITECTURES KOBO_NARCHS)
+	if(KOBO_NARCHS GREATER 1)
+		set(KOBO_MAC_ARCH "universal")
+	elseif(CMAKE_OSX_ARCHITECTURES)
+		set(KOBO_MAC_ARCH "${CMAKE_OSX_ARCHITECTURES}")
+	else()
+		set(KOBO_MAC_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
+	endif()
 	set(CPACK_PACKAGE_FILE_NAME
-		"KoboDeluxe-${VERSION_STRING}-macos-${CMAKE_SYSTEM_PROCESSOR}")
+		"KoboDeluxe-${VERSION_STRING}-macos-${KOBO_MAC_ARCH}")
 endif()
 
 # CPack DEB
