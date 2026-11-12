@@ -83,6 +83,11 @@ candidate.
 | Windows 10/11 (x64) | `packaging/build-windows.sh` | Linux | `build-windows/KoboDeluxe-<version>-windows-x64.exe` |
 | macOS (Apple silicon) | `packaging/build-macos.sh` | macOS | `build-macos/KoboDeluxe-<version>-macos-arm64.dmg` |
 
+The application icons in `icons/` are drawn from the game's own sprites by
+`icons/make-icons.py`, and the disk image background by
+`packaging/make-dmg-background.py`. Both need Pillow; rerun them after
+changing either.
+
 ### Windows
 
 The Windows build is cross-compiled on Linux with mingw-w64, using the
@@ -101,16 +106,19 @@ uninstaller. Player profiles, scores and settings go in
 ### macOS
 
 Build on the Mac itself, with Xcode or its command line tools and Homebrew
-installed. The script installs cmake and sdl12-compat with Homebrew, and
-builds SDL_image 1.2 from source into `~/devel/kobo-deps`, since Homebrew no
-longer has it:
+installed. The script installs cmake, libpng and sdl12-compat with Homebrew,
+and builds SDL_image 1.2 (with libpng) from source into `~/devel/kobo-deps`,
+since Homebrew no longer has it. The disk image is laid out by dmgbuild:
 
 ```bash
+brew install pipx && pipx install dmgbuild
 packaging/build-macos.sh
 ```
 
-The disk image holds `KoboDeluxe.app`, with its libraries inside it, and a
-shortcut to Applications. The app is signed ad hoc, not with an Apple
+The disk image holds `KoboDeluxe.app`, with its libraries and documents
+inside it, and a shortcut to drag it onto Applications. The script deletes
+every other copy of the app it made, so Launchpad only ever lists the
+installed one. The app is signed ad hoc, not with an Apple
 Developer ID, so the first time it is opened macOS will refuse; open it once
 from System Settings > Privacy & Security > Open Anyway. Player data goes in
 `~/.kobodeluxe`.

@@ -66,11 +66,12 @@ if(WIN32)
 	set(KOBO_SHARE_DIR ".")
 	set(KOBO_DOC_DIR "doc")
 elseif(APPLE)
-	# Self-contained "Kobo Deluxe.app"; data goes in Contents/Resources
+	# Self-contained KoboDeluxe.app: data and documents both go in
+	# Contents/Resources, so the disk image holds nothing but the app
 	set(KOBO_BUNDLE_NAME "KoboDeluxe")
 	set(KOBO_BIN_DIR ".")
 	set(KOBO_SHARE_DIR "${KOBO_BUNDLE_NAME}.app/Contents/Resources")
-	set(KOBO_DOC_DIR "Documentation")
+	set(KOBO_DOC_DIR "${KOBO_SHARE_DIR}/Documentation")
 else()
 	set(KOBO_BIN_DIR "bin")
 	set(KOBO_SHARE_DIR "share/${KOBO_PACKAGE_NAME}")
@@ -205,7 +206,8 @@ set(CPACK_NSIS_MUI_FINISHPAGE_RUN "kobodl.exe")
 set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS
 	"Delete '$INSTDIR\\\\stdout.txt'\nDelete '$INSTDIR\\\\stderr.txt'")
 
-# CPack DragNDrop (macOS disk image)
+# CPack DragNDrop (plain macOS disk image). packaging/build-macos.sh
+# builds the release image with dmgbuild instead, for the window layout.
 set(CPACK_DMG_VOLUME_NAME "Kobo Deluxe ${VERSION_STRING}")
 # No click-through licence when opening the disk image; COPYING is inside
 set(CPACK_DMG_SLA_USE_RESOURCE_FILE_LICENSE OFF)

@@ -114,6 +114,9 @@ if(MINGW)
 	ENABLE_LANGUAGE(RC)
 	SET(CMAKE_RC_COMPILE_OBJECT
 		"<CMAKE_RC_COMPILER> <FLAGS> -O coff <DEFINES> -i <SOURCE> -o <OBJECT>")
+	# windres reads the icon, but CMake does not scan .rc files for that
+	set_source_files_properties(${RES_FILES} PROPERTIES OBJECT_DEPENDS
+		"${KOBODELUXE_SOURCE_DIR}/icons/windows/kobodl.ico")
 endif(MINGW)
 
 add_executable(kobodl WIN32 MACOSX_BUNDLE ${sources} ${RES_FILES})
