@@ -2,8 +2,54 @@
 
 Fork of David Olofson's Kobo Deluxe (`upstream` remote), an SDL 1.2 game
 in C/C++ built with CMake. README.md has the full build instructions for
-every platform; this file is the short version for building the Mac
-release.
+every platform; this file is the short version for building and
+publishing releases.
+
+## GitHub account
+
+This repo belongs to **andrew-ahlfield**. Before pushing, tagging or
+touching releases, check that `gh api user --jq .login` prints
+`andrew-ahlfield`, and stop if it doesn't. In this repo `gh` would
+otherwise pick the `upstream` remote (Olofson's repo) as its default, so
+run `gh repo set-default andrew-ahlfield/kobodeluxe` once per clone, or
+pass `-R andrew-ahlfield/kobodeluxe`.
+
+## Releases
+
+Tags are `vX.Y.Z` (release candidates `vX.Y.Z-rcN`). A release carries
+four files:
+
+| File | Built on | By |
+|---|---|---|
+| `KoboDeluxe-<version>-macos-universal.dmg` | a Mac | `packaging/build-macos.sh` |
+| `KoboDeluxe-<version>-windows-x64.exe` | Linux | `packaging/build-windows.sh` |
+| `KoboDeluxe-<version>-linux-amd64.deb` | Linux | `packaging/build-linux.sh`, then renamed (it writes `kobodeluxe_<version>_amd64.deb`) |
+| `SHA256SUMS.txt` | anywhere | `sha256sum` of the other three, made last |
+
+The Mac side tags the release, builds the disk image and creates the
+GitHub release as a **draft** with the notes and the disk image. The
+Linux build box then adds the rest:
+
+```bash
+git fetch --tags && git checkout vX.Y.Z      # the release's tag, exactly
+packaging/build-linux.sh                      # add the suffix, e.g. -rc3, for a release candidate
+cp build-linux/kobodeluxe_X.Y.Z_amd64.deb KoboDeluxe-X.Y.Z-linux-amd64.deb
+packaging/build-windows.sh
+gh release upload vX.Y.Z -R andrew-ahlfield/kobodeluxe \
+	KoboDeluxe-X.Y.Z-linux-amd64.deb build-windows/KoboDeluxe-X.Y.Z-windows-x64.exe
+gh release download vX.Y.Z -R andrew-ahlfield/kobodeluxe -p '*.dmg'
+sha256sum KoboDeluxe-X.Y.Z-* > SHA256SUMS.txt   # all three, nothing else
+gh release upload vX.Y.Z -R andrew-ahlfield/kobodeluxe SHA256SUMS.txt
+```
+
+Then check the draft lists all four files, and stop: **don't publish
+it**. The Mac side publishes once the files are checked. A final release
+is published with `--latest` and not as a pre-release, which is what
+puts it in the repo page's sidebar as **Latest**. Release candidates are
+pre-releases and never show there.
+
+Release titles follow the owner's other repos: `vX.Y.Z: <what's new, in
+a few words>`.
 
 ## Building the macOS release
 
