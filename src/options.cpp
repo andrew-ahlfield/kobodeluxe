@@ -23,6 +23,7 @@
 
 #include "config.h"
 #include "options.h"
+#include "gamepad.h"
 #include "gfxengine.h"
 #include "gamectl.h"
 #include "a_types.h"
@@ -408,10 +409,22 @@ void control_options_t::build()
 	else
 	{
 		prf->number_of_joysticks = SDL_NumJoysticks();
-		yesno("Use Joystick", &prf->use_joystick,
+		yesno("Use Joystick or Gamepad", &prf->use_joystick,
 				OS_RESTART_INPUT | OS_REBUILD);
 		if(prf->use_joystick)
 		{
+			if(gamepad_active())
+			{
+				static char padlabel[40];
+				int n = gamepad_count();
+				if(n == 1)
+					snprintf(padlabel, sizeof(padlabel),
+							"1 gamepad connected");
+				else
+					snprintf(padlabel, sizeof(padlabel),
+							"%d gamepads connected", n);
+				label(padlabel);
+			}
 			if(prf->number_of_joysticks)
 			{
 				list("Joystick Number", &prf->joystick_no,

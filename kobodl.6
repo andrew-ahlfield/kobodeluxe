@@ -33,8 +33,17 @@ The ship can be controlled with the keyboard, or optionally a mouse or
 joystick. With the keyboard, the arrow keys move the ship (two keys for
 diagonals), and the shift and ctrl keys shoots. The numeric key pad can also be
 used; the usual 2/4/6/8 (arrows), and also 1/3/7/9 for single key diagonals.
-Escape enters the meny system, from where it is possible to change settings,
+Escape enters the menu system, from where it is possible to change settings,
 start a new game or exit the game.
+.P
+Gamepads that SDL2 knows (Xbox, PlayStation, Switch Pro and most others) work
+without setup, and can be plugged in while the game runs. The d\-pad or left
+stick moves the ship; A, X, Y, the shoulder buttons and the triggers shoot.
+In the menus, A selects and B goes back; in the game, B shoots too. Start
+pauses, and Back (View, Select, Share) enters the menu system. A joystick
+SDL2 does not know as a gamepad is chosen with
+.BR \-joystick_no ,
+and uses its first button to shoot and its second for Start.
 .SH OPTIONS
 Note that all relevant options can be also configured in the config file,
 which can be edited directly, or using the options menus in the game.
@@ -49,10 +58,10 @@ Log File Format. Default: 0.
 Log Verbosity Level. Default: 2.
 .TP
 .B \-[no]joystick
-Use Joystick. Default: Off.
+Use Joystick or Gamepad. Default: On.
 .TP
 .B \-joystick_no
-Joystick Number. Default: 0.
+Joystick Number, for a joystick that is not a gamepad. Default: 0.
 .TP
 .B \-[no]mouse
 Use Mouse. Default: Off.

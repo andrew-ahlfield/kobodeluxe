@@ -15,6 +15,7 @@ set(sources
 	random.cpp
 	cfgparse.cpp
 	gamectl.cpp
+	gamepad.c
 	kobo.cpp
 	manage.cpp
 	prefs.cpp
@@ -150,7 +151,8 @@ if(MINGW)
 	target_link_options(kobodl PRIVATE -static-libgcc -static-libstdc++)
 endif()
 
-target_link_libraries(kobodl ${SDL_LIBRARY} ${SDLIMAGE_LIBRARY} ${KOBO_EXTRA_LIBRARIES})
+target_link_libraries(kobodl ${SDL_LIBRARY} ${SDLIMAGE_LIBRARY} ${CMAKE_DL_LIBS}
+	${KOBO_EXTRA_LIBRARIES})
 #target_link_libraries(kobodl ${SDL2_LIBRARIES} ${SDL2IMAGE_LIBRARIES}
 #	${AUDIALITY2_LIBRARIES} ${KOBO_EXTRA_LIBRARIES})
 

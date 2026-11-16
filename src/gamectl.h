@@ -104,6 +104,8 @@ class gamecontrol_t
 	gamecontrol_t();
 	static void init(int always_fire);
 	static void repeat(int delay, int interval);
+	static int repeat_delay()	{ return r_delay; }
+	static int repeat_interval()	{ return r_interval; }
 	static void clear();
 	static int map(SDLKey sym);
 	static void process();	// Call every frame!

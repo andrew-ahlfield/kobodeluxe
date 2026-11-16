@@ -61,6 +61,7 @@ extern "C" {
 #include "myship.h"
 #include "enemies.h"
 #include "macos_hotkeys.h"
+#include "gamepad.h"
 
 #define	MAX_FPS_RESULTS	64
 
@@ -350,6 +351,16 @@ class KOBO_main
 	static int		js_fire;
 	static int		js_start;
 
+	// SDL 1.2 joystick state, as GP_* bits
+	static unsigned		js_buttons;
+	static unsigned		js_hat;
+	static int		js_x, js_y;	// -1, 0 or 1
+
+	// What the pads held last frame, and what each bit sent
+	static unsigned		pad_held;
+	static int		pad_sent[8];
+	static Uint32		pad_repeat_at[8];
+
 	static FILE		*logfile;
 
 	static Uint32		esc_tick;
@@ -395,6 +406,9 @@ class KOBO_main
 
 	static int init_js(prefs_t *p);
 	static void close_js();
+	static void js_axis(int axis, int value);
+	static void js_hat_motion(int value);
+	static void pads_frame();
 
 	static int escape_hammering();
 	static int quit_requested();
@@ -413,6 +427,13 @@ int		KOBO_main::js_lr = DEFAULT_JOY_LR;
 int		KOBO_main::js_ud = DEFAULT_JOY_UD;
 int		KOBO_main::js_fire = DEFAULT_JOY_FIRE;
 int		KOBO_main::js_start = DEFAULT_JOY_START;
+unsigned	KOBO_main::js_buttons = 0;
+unsigned	KOBO_main::js_hat = 0;
+int		KOBO_main::js_x = 0;
+int		KOBO_main::js_y = 0;
+unsigned	KOBO_main::pad_held = 0;
+int		KOBO_main::pad_sent[8];
+Uint32		KOBO_main::pad_repeat_at[8];
 
 FILE		*KOBO_main::logfile = NULL;
 
@@ -1276,52 +1297,205 @@ int KOBO_main::load_sounds(prefs_t *p, int render_all)
 
 int KOBO_main::init_js(prefs_t *p)
 {
-	/* Activate Joystick sub-sys if we are using it */
-	if(p->use_joystick)
-	{
-		if(SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0)
-		{
-			log_printf(ELOG, "Error setting up joystick!\n");
-			return -1;
-		}
-		p->number_of_joysticks = SDL_NumJoysticks();
-		if(p->number_of_joysticks > 0)
-		{
-			SDL_JoystickEventState(SDL_ENABLE);
-			if(p->joystick_no >= p->number_of_joysticks)
-				p->joystick_no = 0;
-			joystick = SDL_JoystickOpen(p->joystick_no);
-			if(!joystick)
-			{
-				SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
-				return -2;
-			}
-		}
-		else
-		{
-			log_printf(ELOG, "No joysticks found!\n");
-			joystick = NULL;
-			return -3;
-		}
+	js_buttons = js_hat = 0;
+	js_x = js_y = 0;
+	if(!p->use_joystick)
+		return 0;
 
+	if(SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0)
+	{
+		log_printf(ELOG, "Error setting up joystick!\n");
+		return -1;
 	}
+
+	/*
+	 * Gamepads go through SDL2's game controller API when it's there,
+	 * which gives every pad it knows the same layout. The SDL 1.2
+	 * joystick below is then only for whatever it doesn't know, such
+	 * as flight sticks.
+	 */
+	gamepad_open();
+
+	p->number_of_joysticks = SDL_NumJoysticks();
+	if(p->number_of_joysticks <= 0)
+	{
+		if(!gamepad_count())
+			log_printf(ULOG, "No joysticks or gamepads found.\n");
+		return 0;
+	}
+	if(p->joystick_no >= p->number_of_joysticks)
+		p->joystick_no = 0;
+	if(gamepad_handles_joystick(p->joystick_no,
+			SDL_JoystickName(p->joystick_no)))
+		return 0;
+
+	joystick = SDL_JoystickOpen(p->joystick_no);
+	if(!joystick)
+	{
+		log_printf(ELOG, "Could not open joystick %d!\n",
+				p->joystick_no);
+		return -2;
+	}
+
+	/*
+	 * Keyboards and mice with media keys can show up as joysticks with
+	 * an axis and a hat. Using one of those as the controls only gets
+	 * the menus scrolling on their own, so insist on a stick.
+	 */
+	if(SDL_JoystickNumAxes(joystick) < 2)
+	{
+		log_printf(WLOG, "Joystick %d (%s) has no stick;"
+				" not using it.\n", p->joystick_no,
+				SDL_JoystickName(p->joystick_no));
+		SDL_JoystickClose(joystick);
+		joystick = NULL;
+		return -3;
+	}
+
+	SDL_JoystickEventState(SDL_ENABLE);
+	log_printf(ULOG, "Using joystick %d: %s\n", p->joystick_no,
+			SDL_JoystickName(p->joystick_no));
 	return 0;
 }
 
 
 void KOBO_main::close_js()
 {
+	/* Let go of anything still held, so nothing stays stuck on */
+	js_buttons = js_hat = 0;
+	js_x = js_y = 0;
+	if(pad_held)
+	{
+		for(int i = 0; i < 8; ++i)
+			if(pad_held & (1u << i))
+			{
+				gamecontrol.release(pad_sent[i]);
+				gsm.release(pad_sent[i]);
+			}
+		pad_held = 0;
+	}
+
+	gamepad_close();
+
 	if(!SDL_WasInit(SDL_INIT_JOYSTICK))
 		return;
 
-	if(!joystick)
-		return;
-
-	if(SDL_JoystickOpened(0))
+	if(joystick)
 		SDL_JoystickClose(joystick);
 	joystick = NULL;
 
 	SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
+}
+
+
+/*
+ * Stick to d-pad, with the same thresholds as the gamepads: on past half
+ * way, off again below a third.
+ */
+static int js_stick(int prev, int v)
+{
+	if(v >= 16384)
+		return 1;
+	if(v <= -16384)
+		return -1;
+	if(v > -10000 && v < 10000)
+		return 0;
+	return prev;
+}
+
+
+void KOBO_main::js_axis(int axis, int value)
+{
+	if(axis == js_lr)
+		js_x = js_stick(js_x, value);
+	else if(axis == js_ud)
+		js_y = js_stick(js_y, value);
+}
+
+
+void KOBO_main::js_hat_motion(int value)
+{
+	js_hat = 0;
+	if(value & SDL_HAT_UP)
+		js_hat |= GP_UP;
+	if(value & SDL_HAT_DOWN)
+		js_hat |= GP_DOWN;
+	if(value & SDL_HAT_LEFT)
+		js_hat |= GP_LEFT;
+	if(value & SDL_HAT_RIGHT)
+		js_hat |= GP_RIGHT;
+}
+
+
+/*
+ * Turn what the pads and the joystick hold into presses and releases,
+ * once per frame and only on a change, the way a key works. Directions
+ * repeat in the menus as the keyboard's do.
+ */
+void KOBO_main::pads_frame()
+{
+	unsigned held = js_buttons | js_hat | gamepad_poll();
+	if(js_x < 0)
+		held |= GP_LEFT;
+	else if(js_x > 0)
+		held |= GP_RIGHT;
+	if(js_y < 0)
+		held |= GP_UP;
+	else if(js_y > 0)
+		held |= GP_DOWN;
+
+	if(!held && !pad_held)
+		return;
+
+	gamestate_t *cur = gsm.current();
+	int playing = (cur == &st_game || cur == &st_get_ready ||
+			cur == &st_game_over);
+	Uint32 now = SDL_GetTicks();
+	int delay = gamecontrol.repeat_delay();
+	int interval = gamecontrol.repeat_interval();
+
+	for(int i = 0; i < 8; ++i)
+	{
+		unsigned bit = 1u << i;
+		if((held & bit) && !(pad_held & bit))
+		{
+			int btn;
+			switch(bit)
+			{
+			  case GP_UP:	btn = BTN_UP; break;
+			  case GP_DOWN:	btn = BTN_DOWN; break;
+			  case GP_LEFT:	btn = BTN_LEFT; break;
+			  case GP_RIGHT: btn = BTN_RIGHT; break;
+			  case GP_FIRE:	btn = BTN_FIRE; break;
+			  case GP_START: btn = BTN_START; break;
+			  /* B backs out of menus, and fires in the game */
+			  case GP_BACK:	btn = playing ? BTN_FIRE : BTN_EXIT;
+					break;
+			  default:	btn = BTN_EXIT; break;
+			}
+			pad_sent[i] = btn;
+			pad_repeat_at[i] = now + delay;
+			log_printf(DLOG, "Pad: press %d\n", btn);
+			gamecontrol.press(btn);
+			gsm.press(btn);
+		}
+		else if(!(held & bit) && (pad_held & bit))
+		{
+			log_printf(DLOG, "Pad: release %d\n", pad_sent[i]);
+			gamecontrol.release(pad_sent[i]);
+			gsm.release(pad_sent[i]);
+		}
+		else if((held & bit) && (bit & (GP_UP | GP_DOWN |
+				GP_LEFT | GP_RIGHT)) && delay > 0 &&
+				(Sint32)(now - pad_repeat_at[i]) >= 0)
+		{
+			log_printf(DLOG, "Pad: repeat %d\n", pad_sent[i]);
+			gsm.press(pad_sent[i]);
+			pad_repeat_at[i] = now + (interval > 0 ? interval :
+					delay);
+		}
+	}
+	pad_held = held;
 }
 
 
@@ -1746,69 +1920,26 @@ void kobo_gfxengine_t::frame()
 			km.brutal_quit();
 			break;
 		  case SDL_JOYBUTTONDOWN:
-			if(ev.jbutton.button == km.js_fire)
-			{
-				gamecontrol.press(BTN_FIRE);
-				gsm.press(BTN_FIRE);
-			}
-			else if(ev.jbutton.button == km.js_start)
-			{
-				gamecontrol.press(BTN_START);
-				gsm.press(BTN_START);
-			}
-			break;
 		  case SDL_JOYBUTTONUP:
+		  {
+			unsigned bit = 0;
 			if(ev.jbutton.button == km.js_fire)
-			{
-				gamecontrol.release(BTN_FIRE);
-				gsm.release(BTN_FIRE);
-			}
+				bit = GP_FIRE;
+			else if(ev.jbutton.button == km.js_start)
+				bit = GP_START;
+			if(ev.type == SDL_JOYBUTTONDOWN)
+				km.js_buttons |= bit;
+			else
+				km.js_buttons &= ~bit;
 			break;
+		  }
 		  case SDL_JOYAXISMOTION:
-			// FIXME: We will want to allow these to be
-			// redefined, but for now, this works ;-)
-			if(ev.jaxis.axis == km.js_lr)
-			{
-				if(ev.jaxis.value < -3200)
-				{
-					gamecontrol.press(BTN_LEFT);
-					gsm.press(BTN_LEFT);
-				}
-				else if(ev.jaxis.value > 3200)
-				{
-					gamecontrol.press(BTN_RIGHT);
-					gsm.press(BTN_RIGHT);
-				}
-				else
-				{
-					gamecontrol.release(BTN_LEFT);
-					gamecontrol.release(BTN_RIGHT);
-					gsm.release(BTN_LEFT);
-					gsm.release(BTN_RIGHT);
-				}
-
-			}
-			else if(ev.jaxis.axis == km.js_ud)
-			{
-				if(ev.jaxis.value < -3200)
-				{
-					gamecontrol.press(BTN_UP);
-					gsm.press(BTN_UP);
-				}
-				else if(ev.jaxis.value > 3200)
-				{
-					gamecontrol.press(BTN_DOWN);
-					gsm.press(BTN_DOWN);
-				}
-				else
-				{
-					gamecontrol.release(BTN_UP);
-					gamecontrol.release(BTN_DOWN);
-					gsm.release(BTN_UP);
-					gsm.release(BTN_DOWN);
-				}
-
-			}
+			km.js_axis(ev.jaxis.axis, ev.jaxis.value);
+			break;
+		  case SDL_JOYHATMOTION:
+			if(ev.jhat.hat == 0)
+				km.js_hat_motion(ev.jhat.value);
+			break;
 		  case SDL_MOUSEMOTION:
 			mouse_x = (int)(ev.motion.x / gengine->xscale()) - km.xoffs;
 			mouse_y = (int)(ev.motion.y / gengine->yscale()) - km.yoffs;
@@ -1871,6 +2002,7 @@ void kobo_gfxengine_t::frame()
 			break;
 		}
 	}
+	km.pads_frame();
 	gamecontrol.process();
 
 	/*
