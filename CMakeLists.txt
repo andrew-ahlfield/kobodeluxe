@@ -12,7 +12,7 @@ set(KOBO_ORGANIZATION "OlofsonArcade")
 
 set(VERSION_MAJOR 0)
 set(VERSION_MINOR 6)
-set(VERSION_PATCH 0)
+set(VERSION_PATCH 1)
 set(VERSION_BUILD 0)
 
 option(WIN32_ZIP_BUILD "Package Windows builds as a ZIP instead of an installer." OFF)
